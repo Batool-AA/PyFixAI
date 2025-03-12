@@ -7,7 +7,7 @@ Debugging is one of the most time-consuming and challenging tasks for developers
 ___
  
 ## Dataset 
-The dataset will be sourced from [**Natural Syntax Errors and Corrections**](https://figshare.com/articles/dataset/Python3_6_Natural_Syntax_Errors_and_Corrections/8244686?file=15438185) specifically the following four files: 
+The dataset will be sourced from [**Python CodeNet Dataset**](https://github.com/google-research/runtime-error-prediction/) specifically the following four files: 
 1. parse_errors.json – This file contains around 62,965 syntax errors. 
 2. parse_fixes.json – This file provides corrections for the syntax errors in parse_errors.json. 
 3. parse_errors_runtime.json – This file includes around 62,965 basic runtime errors. 
@@ -24,5 +24,5 @@ ___
 ## Weekly Milestones
 | Week Number  | Milestone Details | Milestone Progress | Challenges Faced |
 | ------------- | ------------- | ------------- | ------------- |
-| Week 10  | Preparing and Preprocessing dataset  |  | |
+| Week 10  | Preparing and Preprocessing dataset  | In Progress | The dataset initially proposed could not be used because the proposed fixes in the dataset had errors in them. Therefore, we had to spend additional time in finding and understanding new dataset. |
 | Week 11  | Understanding and Finetuning CodeBERT  |  |  |
