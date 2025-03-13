@@ -7,11 +7,7 @@ Debugging is one of the most time-consuming and challenging tasks for developers
 ___
  
 ## Dataset 
-The dataset will be sourced from [**Python CodeNet Dataset**](https://github.com/google-research/runtime-error-prediction/) specifically the following four files: 
-1. parse_errors.json – This file contains around 62,965 syntax errors. 
-2. parse_fixes.json – This file provides corrections for the syntax errors in parse_errors.json. 
-3. parse_errors_runtime.json – This file includes around 62,965 basic runtime errors. 
-4. parse_errors_runtime_fixes.json – This file contains fixes for errors listed in parse_errors_runtime.json. 
+The dataset will be sourced from [**Python CodeNet Dataset**](https://github.com/google-research/runtime-error-prediction/).
 ___
 
 ## Benchmarks and Evaluation Metrics 
