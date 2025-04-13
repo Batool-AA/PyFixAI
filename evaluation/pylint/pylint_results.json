@@ -1,0 +1,105 @@
+""{
+    "avg_score": 0.0,
+    "results": [
+        {
+            "test_case": "def add(a, b):\n    return a == b",
+            "generated_code": "add",
+            "pylint_score": 0.0
+        },
+        {
+            "test_case": "def is_even(n):\n    return n % 2",
+            "generated_code": "n",
+            "pylint_score": 0.0
+        },
+        {
+            "test_case": "def square(x):\n    return x * x * x",
+            "generated_code": "x",
+            "pylint_score": 0.0
+        },
+        {
+            "test_case": "def greet(name):\n    return 'Hello' + name",
+            "generated_code": "name",
+            "pylint_score": 0.0
+        },
+        {
+            "test_case": "def get_length(lst):\n    return lst(length)",
+            "generated_code": "length = len(lst) return length",
+            "pylint_score": "N/A"
+        },
+        {
+            "test_case": "def divide(a, b):\n    return a * b",
+            "generated_code": "divide",
+            "pylint_score": 0.0
+        },
+        {
+            "test_case": "def reverse_string(s):\n    return s",
+            "generated_code": "s",
+            "pylint_score": 0.0
+        },
+        {
+            "test_case": "def find_max(a, b):\n    return a if a < b else b",
+            "generated_code": ":",
+            "pylint_score": "N/A"
+        },
+        {
+            "test_case": "def is_positive(n):\n    return n < 0",
+            "generated_code": "n",
+            "pylint_score": 0.0
+        },
+        {
+            "test_case": "def factorial(n):\n    return n * factorial(n-1)",
+            "generated_code": "n - 1",
+            "pylint_score": 0.0
+        },
+        {
+            "test_case": "def is_palindrome(s):\n    return s == s",
+            "generated_code": ":",
+            "pylint_score": "N/A"
+        },
+        {
+            "test_case": "def subtract(a, b):\n    return a + b",
+            "generated_code": ":",
+            "pylint_score": "N/A"
+        },
+        {
+            "test_case": "def double_list(lst):\n    return [x for x in lst if x * 2]",
+            "generated_code": "lst",
+            "pylint_score": 0.0
+        },
+        {
+            "test_case": "def make_upper(s):\n    return s.lower()",
+            "generated_code": "return s.lower()",
+            "pylint_score": 0.0
+        },
+        {
+            "test_case": "def list_sum(lst):\n    return sum(lst) / len(lst)",
+            "generated_code": "return list_sum(lst)",
+            "pylint_score": 0.0
+        },
+        {
+            "test_case": "def get_item(lst, i):\n    return lst(i)",
+            "generated_code": ": return get_item(lst, i)",
+            "pylint_score": "N/A"
+        },
+        {
+            "test_case": "def is_zero(n):\n    return n = 0",
+            "generated_code": "n = 0",
+            "pylint_score": 0.0
+        },
+        {
+            "test_case": "def is_adult(age):\n    return age < 18",
+            "generated_code": ":",
+            "pylint_score": "N/A"
+        },
+        {
+            "test_case": "def get_first(lst):\n    return lst[-1]",
+            "generated_code": "lst[-1]",
+            "pylint_score": 0.0
+        },
+        {
+            "test_case": "def count_chars(s):\n    return len(s.split())",
+            "generated_code": "return len(s)",
+            "pylint_score": 0.0
+        }
+    ]
+}

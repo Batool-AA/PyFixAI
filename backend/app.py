@@ -41,7 +41,7 @@ CORS(app)  # Allow cross-origin requests (from frontend)
 #     except Exception as e:
 #         return jsonify({"error": str(e)}), 500
 
-model_path = "../model/codet5-fix-model" 
+model_path = "Salesforce/codet5-base" 
 tokenizer = RobertaTokenizer.from_pretrained(model_path)
 model = T5ForConditionalGeneration.from_pretrained(model_path)
 
