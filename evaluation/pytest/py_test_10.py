@@ -154,7 +154,7 @@ def check_model_code_matches_target(model_tokens, target_tokens, input_data, dec
 def evaluate_seq_2_seq(entry, tokenizer, model):
     src_code = entry["src"]
     expected_output = entry["tgt"]
-
+    
     inputs = tokenizer(src_code, return_tensors="pt", truncation=True, padding=True, max_length=128)
 
     with torch.no_grad():
