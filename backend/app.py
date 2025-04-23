@@ -2,6 +2,9 @@ from flask import Flask, request, jsonify
 from transformers import RobertaTokenizer, RobertaForSequenceClassification, T5Tokenizer, T5ForConditionalGeneration
 import torch
 from flask_cors import CORS
+import openai
+from openai import OpenAI
+import os
 
 # Initialize app
 app = Flask(__name__)
@@ -61,6 +64,25 @@ def suggest_fix(code: str):
     decoded = tokenizer.decode(output[0], skip_special_tokens=True)
     return decoded.replace(" NEW_LINE ", "\n").replace(" INDENT ", "    ")
 
+
+# Make sure to set your API key
+client = OpenAI(api_key="" ) # or directly set: openai.api_key = "your-key"
+
+def explain_code(code: str) -> str:
+    try:
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",  # or gpt-4
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant that explains Python code."},
+                {"role": "user", "content": f"Explain this Python code:\n{code}"}
+            ],
+            temperature=0.3
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        return f"Error explaining code: {e}"
+    
+
 @app.route("/suggest_fix", methods=["POST"])
 def suggest_fix_api():
     data = request.get_json()
@@ -71,6 +93,16 @@ def suggest_fix_api():
 
     fix = suggest_fix(code)
     return jsonify({"fixed_code": fix})
+
+@app.route("/explain_code", methods=["POST"])
+def explain_code_api():
+    data = request.get_json()
+    code = data.get("code", "")
+    if not code:
+        return jsonify({"error": "code is required"}), 400
+
+    explain= explain_code(code)
+    return jsonify({"explanation": explain})
 
 if __name__ == "__main__":
     app.run(debug=True)

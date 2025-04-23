@@ -2,28 +2,53 @@ import React, { useState, useEffect } from "react";
 import "./App.css";
 
 // Code protection patterns to check for problematic content
-const problematicPatterns = [
+const safetyPatterns = [
+  // Bias 
   {
-    pattern: /\b(gender|race|ethnicity|religion|disability|nationality)\b/i,
-    category: "Personal identifiers",
-    description: "Code references potentially sensitive demographic identifiers"
+    pattern: /\b(gender|race|ethnicity|religion|disability|nationality|caste|tribe)\b/i,
+    category: "Bias or Discrimination",
+    description: "Mentions of sensitive demographic categories that may indicate bias"
   },
   {
-    pattern: /\b(blacklist|whitelist|master|slave|illegal alien)\b/i,
-    category: "Problematic terminology",
-    description: "Code uses terms that may perpetuate harmful stereotypes"
+    pattern: /if\s*\((.*\b(gender|race|religion|ethnicity)\b.*?)\)/i,
+    category: "Bias or Discrimination",
+    description: "Conditional logic based on protected or sensitive attributes"
+  },
+  // Hate Content
+  {
+    pattern: /\b(hate|violence|kill|terror|abuse|slur|nazi|racist|sexist|homophobic|die)\b/i,
+    category: "Hate or Inappropriate Content",
+    description: "Terms indicating hate speech or inappropriate content"
   },
   {
-    pattern: /if\s*\(\s*(?:gender|race|ethnicity|religion)\s*==?\s*['"](.+?)['"]\)/i,
-    category: "Conditional logic based on protected attributes",
-    description: "Code contains conditional logic based on protected attributes"
+    pattern: /\b(fuck|shit|bitch|asshole|bastard)\b/i,
+    category: "Hate or Inappropriate Content",
+    description: "Profanity detected in the code"
+  },
+
+  //Private / Sensitive Info
+  {
+    pattern: /['"]?(apikey|api_key|token|access_token)['"]?\s*[:=]\s*['"][A-Za-z0-9_\-]{16,}['"]/i,
+    category: "Private or Sensitive Info",
+    description: "Possible hardcoded API key or token"
   },
   {
-    pattern: /\b(discrimination|prejudice|unfair|bias)\b/i,
-    category: "Algorithmic bias indicators",
-    description: "Code contains terms that may indicate algorithmic bias"
+    pattern: /['"]?(password|passwd|secret)['"]?\s*[:=]\s*['"][^'"]{4,}['"]/i,
+    category: "Private or Sensitive Info",
+    description: "Potential hardcoded password or secret key"
+  },
+  {
+    pattern: /[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+/,
+    category: "Private or Sensitive Info",
+    description: "Email address detected"
+  },
+  {
+    pattern: /-----BEGIN (RSA|EC|DSA)? PRIVATE KEY-----/,
+    category: "Private or Sensitive Info",
+    description: "Private key found in the code"
   }
 ];
+
 
 function App() {
   const [code, setCode] = useState("");
@@ -42,38 +67,55 @@ function App() {
 
   // Check if input text is likely Python code
   const isPythonCode = (text) => {
-    // Basic validation to check if the text looks like Python code
     if (!text || text.trim() === '') return false;
-    
-    const pythonIndicators = [
-      // Check for Python keywords
-      /\b(def|class|import|from|if|elif|else|for|while|try|except|return|yield|with)\b/,
-      // Check for Python-style indentation
-      /^( {4}|\t)+\S+/m,
-      // Check for Python function definitions
-      /def\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\(/,
-      // Check for Python-style comments
-      /^\s*#.*$/m,
-      // Check for Python assignments with =
-      /[a-zA-Z_][a-zA-Z0-9_]*\s*=/,
-      // Check for Python-style string literals
-      /(['"])(?:(?=(\\?))\2.)*?\1/,
-      // Check for Python list or dictionary
-      /[\[\{].*[\]\}]/
-    ];
-    
-    // Count how many Python indicators are present
-    const indicatorsFound = pythonIndicators.filter(regex => regex.test(text)).length;
-    
-    // If we found at least 2 indicators, it's likely Python code
-    return indicatorsFound >= 2;
-  };
 
-  // New function to detect problematic code
+  const loosePythonIndicators = [
+    // Keywords often found in code
+    /\b(def|class|import|from|if|elif|else|for|while|try|except|return|with|as|pass|break|continue|lambda|print)\b/,
+    // Possible function or class structure even if malformed
+    /\b(def|class)\s+[a-zA-Z_][a-zA-Z0-9_]*\b/,
+    // Use of common Python symbols (e.g., :, (), [], {}, =, etc.)
+    /[:\[\]{}()=]/,
+    // Use of indentation (even if inconsistent)
+    /^\s{2,}\S+/m,
+    // Comment-like lines
+    /^\s*#.*$/m,
+    // String literals, even if unmatched
+    /['"]/,
+    // Presence of known built-in functions or keywords
+    /\b(print|len|range|open|input|int|str|list|dict)\b/,
+  ];
+
+  // Count how many indicators are present
+  const indicatorsFound = loosePythonIndicators.filter(regex => regex.test(text)).length;
+  return indicatorsFound >= 2;  };
+
+// function to check valid python code
+const isValidPythonCode = (text) => {
+  if (!text || text.trim() === '') return false;
+
+  const strictIndicators = [
+    /\b(def|class|import|from|if|elif|else|for|while|try|except|with|return|yield|lambda|print)\b/,
+    /^def\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\(.*\):/m,
+    /^class\s+[a-zA-Z_][a-zA-Z0-9_]*\s*(\(.*\))?:/m,
+    /^( {4}|\t)+\S+/m,
+    /^\s*(if|elif|else|for|while|try|except|with)\s+.*:\s*$/m,
+    /^\s*#.*$/m,
+    /\b(print|len|range|input|str|int|float|list|dict|set)\s*\(/,
+  ];
+
+  const indicatorsFound = strictIndicators.filter(regex => regex.test(text)).length;
+  if (/^\s*print\s*\(.*\)\s*$/.test(text)) return true;
+  return indicatorsFound >= 3;
+};
+
+
+
+ // New function to detect problematic code
   const detectProblematicCode = (code) => {
     const issues = [];
     
-    problematicPatterns.forEach(item => {
+    safetyPatterns.forEach(item => {
       const matches = code.match(item.pattern);
       if (matches) {
         issues.push({
@@ -101,31 +143,44 @@ function App() {
   const checkCodeGuardrails = () => {
     const issues = detectProblematicCode(code);
     setCodeIssues(issues);
-    
+  
     if (issues.length > 0) {
       setShowGuardrailWarning(true);
       return false;
     }
-    
+  
     return true;
   };
 
   const handleSubmit = async () => {
     if (!code.trim()) return;
-    
-    // Check if input is valid Python code
-    if (!isPythonCode(code)) {
-      setValidationError("The input doesn't appear to be valid Python code. Please check your code and try again.");
-      setResponse(null);
-      return;
+
+    const isSafe = checkCodeGuardrails();
+    if (!isSafe) {
+      // setValidationError("The code contains unsafe content. Please correct it before proceeding.");
+      return; // Halt here if unsafe
     }
-    
-    setValidationError("");
-    
-    // Check guardrails if not bypassed
-    if (!bypassGuardrails && !checkCodeGuardrails()) {
-      return;
+
+    if (mode === "fix")
+    {
+      if (!isPythonCode(code)) {
+        setValidationError("The input doesn't appear to be valid Python code. Please check your code and try again.");
+        setResponse(null);
+        return;
+      }
+      
+      setValidationError("");
     }
+    else if (mode === "explain"){
+      if (!isValidPythonCode(code)) {
+        setValidationError("The input doesn't appear to be valid Python code. Please check your code and try again.");
+        setResponse(null);
+        return;
+      }
+      
+      setValidationError("");
+    }
+
     
     setIsLoading(true);
     try {
@@ -262,48 +317,18 @@ function App() {
             </button>
           </div>
 
-          {/* Guardrail Warning Modal */}
+          {/* Content Safety */}
           {showGuardrailWarning && (
-            <div className="guardrail-warning">
-              <div className="guardrail-warning-content">
-                <h3>⚠️ Code Protection Alert</h3>
-                <p>We've detected potentially problematic code that may contain bias or discriminatory elements:</p>
-                <ul>
-                  {codeIssues.map((issue, index) => (
-                    <li key={index}>
-                      <strong>{issue.category}:</strong> {issue.description}
-                      <ul>
-                        {issue.matches.map((match, i) => (
-                          <li key={i} className="code-match-item">"{match}"</li>
-                        ))}
-                      </ul>
-                    </li>
-                  ))}
-                </ul>
-                <p>We recommend reviewing your code to ensure it follows ethical coding practices.</p>
-                <div className="guardrail-buttons">
-                  <button 
-                    className="cancel-button"
-                    onClick={() => setShowGuardrailWarning(false)}
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    className="bypass-button"
-                    onClick={handleBypassGuardrails}
-                  >
-                    Proceed Anyway
-                  </button>
-                </div>
-              </div>
-            </div>
+          <div className="warning">
+          <strong>⚠️ Warning:</strong> The code contains unsafe or sensitive content. Please remove or modify it before continuing.
+          </div>
           )}
 
           {response && (
             <div className="results-container">
-              <div className="editor-header">
+              <div className="warning-message">
                 <span>
-                  {mode === "fix" ? "Suggested Fix" : "Code Explanation"}
+                  {mode === "fix" ? "Suggested Fix" : "Explanation"}
                 </span>
                 <button 
                   className="copy-button"
