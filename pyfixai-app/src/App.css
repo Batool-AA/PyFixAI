@@ -238,13 +238,16 @@ body {
 
 .copy-button {
   padding: 0.25rem 0.5rem;
+  margin-left: 10px;
   background-color: transparent;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  font-size: 0.75rem;
   cursor: pointer;
   transition: var(--transition);
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .copy-button:hover {
@@ -384,4 +387,30 @@ body {
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
   font-size: 0.875rem;
   margin-top: -1px;
+}
+
+.warning {
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #856404;
+  margin-left: 0px;
+  
+}
+
+.warning-message {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-left: 10px;
+  margin-top: 20px;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  gap: 1rem; /* Optional: adds spacing between text and button */
+}
+
+.warning-message span {
+  min-width: 130px; /* Adjust this value based on your actual label length */
 }
