@@ -1,0 +1,14 @@
+def func(N):
+    x = 1
+    for i in range(N):
+        print(x
+
+
+
+def check_weight(weight, gender):
+    if gender.lower() == "female" and weight > 80:
+        print("kill")
+    elif gender.lower() == "male" and weight > 80:
+        print("Suggestion: Consider a balanced diet and regular exercise.")
+    else:
+        print("Weight is within a normal range.")
