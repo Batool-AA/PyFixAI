@@ -1,72 +1,54 @@
 from flask import Flask, request, jsonify
-from transformers import RobertaTokenizer, RobertaForSequenceClassification, T5Tokenizer, T5ForConditionalGeneration
 import torch
 from flask_cors import CORS
-import openai
 from openai import OpenAI
-import os
+from torch.utils.data import DataLoader
+from transformers import RobertaTokenizer
+import functions
+from functions import pre_tokenize_data, cleanup_tokens, detokenize, tokenize_code
+import sys
 
 # Initialize app
 app = Flask(__name__)
 CORS(app)  # Allow cross-origin requests (from frontend)
 
-# Load tokenizer and model
-# model_path = "../model/codebert-bug-type"
-# tokenizer = RobertaTokenizer.from_pretrained(model_path)
-# model = RobertaForSequenceClassification.from_pretrained(model_path)
-# model.eval()
+sys.modules['__main__'].CodeErrorFixModel = functions.CodeErrorFixModel
+sys.modules['__main__'].PositionalEncoding = functions.PositionalEncoding
+model_path = "C:/Users/User/Documents/GitHub/PyFixAI/codebert-custom0/full_model.pth"
+tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
+model = torch.load(model_path, map_location="cpu", weights_only=False)
+device = 'cpu'
 
-# label_map = {
-#     0: "clean",
-#     1: "missing_colon",
-#     2: "indentation_error",
-#     3: "undefined_variable",
-#     4: "unmatched_brackets",
-#     5: "index_error"
-# }
-
-# @app.route("/predict", methods=["POST"])
-# def predict_bug_type():
-#     try:
-#         data = request.json
-#         code = data.get("code", "")
-#         if not code:
-#             return jsonify({"error": "No code provided"}), 400
-
-#         inputs = tokenizer(code, return_tensors="pt", truncation=True, padding=True, max_length=128)
-#         with torch.no_grad():
-#             outputs = model(**inputs)
-#             predicted_id = torch.argmax(outputs.logits, dim=-1).item()
-#             bug_type = label_map[predicted_id]
-
-#         return jsonify({"bug_type": bug_type})
-
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 500
-
-model_path = "Salesforce/codet5-base" 
-tokenizer = RobertaTokenizer.from_pretrained(model_path)
-model = T5ForConditionalGeneration.from_pretrained(model_path)
+client = OpenAI(api_key="" )
 
 def suggest_fix(code: str):
-    # Convert input to token format used in training
-    tokenized_input = " ".join(code.replace("\n", " NEW_LINE ").replace("    ", " INDENT ").split())
-    input_text = f"fix: {tokenized_input}"
-
-    inputs = tokenizer(input_text, return_tensors="pt", truncation=True, padding=True, max_length=512)
+    print("input code", code)
+    entry = tokenize_code(code)
+    print("tokenized", entry)
+    tokenized_test_data = pre_tokenize_data(entry, tokenizer, max_length=512)
+    test_loader = DataLoader(tokenized_test_data, batch_size=1)
+    
     with torch.no_grad():
-        output = model.generate(
-            **inputs,
-            max_length=512,
-            num_beams=4,
-            early_stopping=True
-        )
-    decoded = tokenizer.decode(output[0], skip_special_tokens=True)
-    return decoded.replace(" NEW_LINE ", "\n").replace(" INDENT ", "    ")
+        for batch in test_loader:
+            src_input_ids = batch['src_input_ids'].to(device)
+            src_attention_mask = batch['src_attention_mask'].to(device)
+            tgt_input_ids = batch['tgt_input_ids'].to(device)
+            tgt_attention_mask = batch['tgt_attention_mask'].to(device)
 
+            # 🔮 Predict (use teacher forcing)
+            output = model(src_input_ids, src_attention_mask, tgt_input_ids[:, :-1], tgt_attention_mask[:, :-1])
+            predicted_ids = output.argmax(dim=-1)
 
-# Make sure to set your API key
-client = OpenAI(api_key="" ) # or directly set: openai.api_key = "your-key"
+            # Decode Input (buggy), Prediction, and Target (ground truth)
+            input_text = tokenizer.decode(src_input_ids[0], skip_special_tokens=True)
+            predicted_text = tokenizer.decode(predicted_ids[0], skip_special_tokens=True)
+            target_text = tokenizer.decode(tgt_input_ids[0], skip_special_tokens=True)
+    
+    # print("output - before clean\n", predicted_text)
+    predicted_text = cleanup_tokens(predicted_text)
+    # print("output after clean\n", predicted_text)
+    predicted_text = detokenize(predicted_text.split())
+    return predicted_text
 
 def explain_code(code: str) -> str:
     try:
@@ -82,12 +64,11 @@ def explain_code(code: str) -> str:
     except Exception as e:
         return f"Error explaining code: {e}"
     
-
 @app.route("/suggest_fix", methods=["POST"])
 def suggest_fix_api():
     data = request.get_json()
     code = data.get("buggy_code", "")
-    
+    print(code)
     if not code:
         return jsonify({"error": "buggy_code is required"}), 400
 
