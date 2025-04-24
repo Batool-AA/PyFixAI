@@ -90,60 +90,52 @@ def pre_tokenize_data(data, tokenizer, max_length=512):
     return tokenized_data
 
 def cleanup_tokens(token_str):
+    import re
+
     # Normalize whitespace
     token_str = token_str.replace('\n', ' ').replace('\r', ' ')
     token_str = re.sub(r'\s+', ' ', token_str).strip()
 
-    # First, handle quoted strings separately by preserving them as single tokens
+    # Tokenize string
     quoted_tokens = re.findall(r'"[^"]*"|\S+', token_str)
-
     cleaned = []
 
-    # Valid operators and keywords
     valid_symbols = {
         "NEW_LINE", "INDENT", "DEDENT",
         "(", ")", "[", "]", "{", "}", ":", ",", ".", "+", "-", "*", "/", "=", "==", "!=", "<", ">", "<=", ">=", ":=", '"'
     }
 
+    valid_keywords = {"NEW_LINE", "INDENT", "DEDENT"}
     garbage_start_index = None
 
+    # Drop garbage after patterns like = = = = =
     for i, token in enumerate(quoted_tokens):
-        # Detect garbage start: long runs of repeated tokens
         if token in {"=", "_", "+", "-", "[", "]"} and i + 3 < len(quoted_tokens):
-            # Check if a repeated pattern begins (like '= = = =')
             pattern = quoted_tokens[i:i+5]
             if all(p == token for p in pattern):
                 garbage_start_index = i
                 break
 
-    # Clean only the part before the garbage starts
     if garbage_start_index is not None:
         quoted_tokens = quoted_tokens[:garbage_start_index]
 
-    # Now keep only valid tokens
+    # Remove incomplete structured token at end (like 'NEW', 'IND')
+    if quoted_tokens:
+        last = quoted_tokens[-1]
+        if any(last != kw and kw.startswith(last) for kw in valid_keywords):
+            quoted_tokens = quoted_tokens[:-1]
+
     for token in quoted_tokens:
-        # If token is in valid symbols, add it
         if token in valid_symbols:
             cleaned.append(token)
-        # If token represents newline, indent, or dedent, add it
-        elif token in {"NEW_LINE", "INDENT", "DEDENT"}:
+        elif token in valid_keywords:
             cleaned.append(token)
-        # If token is a valid identifier or keyword
-        elif re.fullmatch(r"[a-zA-Z_][a-zA-Z0-9_]*", token):  # identifiers/keywords
+        elif re.fullmatch(r"[a-zA-Z_][a-zA-Z0-9_]*", token):
             cleaned.append(token)
-        # If token is a number
-        elif re.fullmatch(r"\d+", token):  # numbers
+        elif re.fullmatch(r"\d+", token):
             cleaned.append(token)
-        # If token is a quoted string, retain it (including the quotes)
-        elif token.startswith('"') and token.endswith('"'):  # Check for quoted strings
+        elif token.startswith('"') and token.endswith('"'):
             cleaned.append(token)
-
-    # Move last valid token to start (if we had garbage and tokens are present)
-    if cleaned:
-        last_valid = cleaned[-1]
-        if last_valid not in {"NEW_LINE", "INDENT", "DEDENT"}:
-            cleaned.pop()
-            cleaned.insert(0, last_valid)
 
     return " ".join(cleaned)
 
@@ -189,12 +181,21 @@ def detokenize(tokens):
     return ''.join(code)
 
 def tokenize_code(code):
+    lines = code.strip().split('\n')
     tokens = []
-    try:
-        g = tokenize.generate_tokens(io.StringIO(code).readline)
-        for toknum, tokval, _, _, _ in g:
-            if toknum != tokenize.ENCODING:
-                tokens.append(tokval)
-    except Exception:
-        pass  # fallback or skip
-    return tokens
+
+    for line in lines:
+        line = line.rstrip()
+        if line == "":
+            continue
+
+        indent_level = (len(line) - len(line.lstrip(' '))) // 4
+        if indent_level > 0:
+            tokens.extend(["INDENT"] * indent_level)
+
+        parts = re.findall(r'\w+|[^\s\w]', line)
+        tokens.extend(parts)
+        tokens.append("NEW_LINE")
+
+    return [t for t in tokens if t]
+
