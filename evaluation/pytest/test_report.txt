@@ -1,4 +1,0 @@
-Total Tests: 3
-Passed: 0
-Failed: 3
-Skipped: 0
