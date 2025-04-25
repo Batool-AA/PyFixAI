@@ -1,6 +1,4 @@
 from flask import Flask, request, jsonify
-import torch
-import torch.nn.functional as F
 from flask_cors import CORS
 from openai import OpenAI
 from torch.utils.data import DataLoader
@@ -8,8 +6,14 @@ from transformers import RobertaTokenizer
 import functions
 from functions import pre_tokenize_data, cleanup_tokens, detokenize, tokenize_code
 import sys
+from dotenv import load_dotenv
+import os
+import torch
+import torch.nn.functional as F
 
-
+load_dotenv(dotenv_path="../.env")
+api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=api_key)
 
 # Initialize app
 app = Flask(__name__)
@@ -27,18 +31,19 @@ if model:
     model.to("cpu")
 else:
     print("Failed to load the model, skipping inference.")
-client = OpenAI(api_key="" )
 
-import torch
-import torch.nn.functional as F
+
+
+
+
 
 def suggest_fix(code: str):
-    print("input code", code)
+    # print("input code", code)
     entry = tokenize_code(code)
     raw_tokens = tokenizer(entry, return_tensors="pt", padding=True)
     input_token_count = raw_tokens["input_ids"].shape[1]
     max_length = min(input_token_count * 8, 256)    
-    print("tokenized", entry)
+    # print("tokenized", entry)
 
     tokenized = pre_tokenize_data(entry, tokenizer, max_length=512)[0]
     src_input_ids = tokenized["src_input_ids"].unsqueeze(0).to(device)
@@ -51,7 +56,7 @@ def suggest_fix(code: str):
     tgt_ids = torch.tensor([[bos_id]], device=device)
     # input_len = src_input_ids.shape[1]  # number of input tokens
     # max_length = 4 * input_len  # cap at 256, or adjust this cap as needed
-    print("max:", max_length)
+    # print("max:", max_length)
     generated_ids = tgt_ids
 
     repetition_count = 0
