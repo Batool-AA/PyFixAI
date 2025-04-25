@@ -3,7 +3,7 @@ An AI-powered tool that detects syntax and logical errors in Python code and sug
 ___
 
 ## Abstract 
-Debugging is one of the most time-consuming and challenging tasks for developers, often requiring significant manual effort to identify and resolve issues. This project proposes an intelligent code debugger, designed to automatically detect both syntax and logical errors in code, while providing suggestions for fixes. The tool will identify common issues such as missing colons and brackets, undefined variables, index errors, and indentation faults. This will enhance productivity by reducing debugging time. The tool will support Python, with a web-based interface that allows users to seamlessly input their code, quickly identify errors, and receive real-time suggestions for corrections. For this project, we will fine-tune **CodeBERT** using the dataset mentioned below to optimize its performance for our specific task. 
+Debugging is one of the most time-consuming and challenging tasks for developers, often requiring significant manual effort to identify and resolve issues. This project proposes an intelligent code debugger, designed to automatically detect both syntax and logical errors in code, while providing suggestions for fixes. The tool will identify common issues such as missing colons and brackets, undefined variables, index errors, and indentation faults. This will enhance productivity by reducing debugging time. The tool will support Python, with a web-based interface that allows users to seamlessly input their code, quickly identify errors, and receive real-time suggestions for corrections. For this project, we used CodeBERT as our encoder and developed a custom decoder, following the transformer architecture.
 ___
 
 ## Features
